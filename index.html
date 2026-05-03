@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fire Speed Boat Rush | Reh Dogg Games Plus</title>
+<style>
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #031421;
+    color: #fff;
+    font-family: "Segoe UI", Arial, sans-serif;
+    touch-action: none;
+  }
+  canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+  }
+  .screen {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: none;
+    place-items: center;
+    padding: 18px;
+    background:
+      radial-gradient(circle at 50% 18%, rgba(255,116,41,.22), transparent 30%),
+      linear-gradient(180deg, rgba(1,8,18,.82), rgba(1,8,18,.94));
+  }
+  .screen.active { display: grid; }
+  .panel {
+    width: min(760px, 100%);
+    padding: clamp(20px, 4vw, 34px);
+    border: 2px solid rgba(255,212,81,.75);
+    border-radius: 20px;
+    background: rgba(3, 18, 34, .88);
+    box-shadow: 0 24px 80px rgba(0,0,0,.65), inset 0 0 38px rgba(66,234,255,.08);
+    text-align: center;
+  }
+  .brand {
+    color: #42eaff;
+    font-weight: 950;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    text-shadow: 0 0 16px rgba(66,234,255,.7);
+  }
+  h1 {
+    margin: 10px 0;
+    color: #ffd451;
+    font-size: clamp(2.15rem, 9vw, 5rem);
+    line-height: .92;
+    text-transform: uppercase;
+    text-shadow: 0 5px 0 #8b220d, 0 0 26px rgba(255,116,41,.68);
+  }
+  h2 {
+    margin: 0 0 12px;
+    color: #ffd451;
+    font-size: clamp(1.6rem, 6vw, 3.4rem);
+    text-transform: uppercase;
+  }
+  .copy {
+    margin: 12px auto 20px;
+    max-width: 620px;
+    color: #dff8ff;
+    font-size: clamp(.96rem, 2.5vw, 1.1rem);
+    line-height: 1.5;
+  }
+  button {
+    min-height: 52px;
+    margin: 7px;
+    padding: 12px 20px;
+    border: 0;
+    border-radius: 13px;
+    background: linear-gradient(180deg, #ffd451, #ff7429);
+    color: #240900;
+    font: 950 1rem system-ui, sans-serif;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #742200;
+    touch-action: none;
+  }
+  button:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #742200;
+  }
+  .volumeControl {
+    display: grid;
+    gap: 7px;
+    margin: 14px auto 0;
+    width: min(280px, 100%);
+    color: #dff8ff;
+    font: 850 .78rem system-ui, sans-serif;
+    text-transform: uppercase;
+  }
+  .volumeControl input {
+    width: 100%;
+    accent-color: #42eaff;
+  }
+  #hud {
+    position: fixed;
+    z-index: 7;
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    pointer-events: none;
+  }
+  .stat {
+    min-height: 54px;
+    padding: 7px 8px;
+    border: 1px solid rgba(255,212,81,.58);
+    border-radius: 12px;
+    background: rgba(1,8,18,.72);
+    box-shadow: inset 0 0 18px rgba(66,234,255,.08);
+    text-align: center;
+  }
+  .stat span {
+    display: block;
+    color: #83e9ff;
+    font-size: .7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .stat strong {
+    display: block;
+    color: #fff;
+    font-size: clamp(1rem, 3.5vw, 1.45rem);
+    text-shadow: 0 0 12px rgba(255,212,81,.55);
+  }
+  #quickControls {
+    position: fixed;
+    z-index: 8;
+    right: 12px;
+    top: 82px;
+    width: 148px;
+    display: grid;
+    gap: 7px;
+  }
+  #quickControls button {
+    min-height: 38px;
+    margin: 0;
+    padding: 8px;
+    color: #fff;
+    font-size: .72rem;
+    background: linear-gradient(180deg, rgba(66,234,255,.92), rgba(25,75,210,.82));
+    box-shadow: 0 4px 0 #04102c;
+  }
+  #raceMessage {
+    position: fixed;
+    z-index: 9;
+    left: 50%;
+    top: 45%;
+    transform: translate(-50%, -50%);
+    color: #ffd451;
+    font: 950 clamp(2.1rem, 10vw, 6rem) system-ui, sans-serif;
+    text-align: center;
+    text-transform: uppercase;
+    text-shadow: 0 5px 0 #8b220d, 0 0 34px rgba(255,116,41,.75);
+    pointer-events: none;
+    opacity: 0;
+  }
+  #raceMessage.active {
+    animation: popFade 950ms ease-out forwards;
+  }
+  @keyframes popFade {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(.75); }
+    22% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    100% { opacity: 0; transform: translate(-50%, -62%) scale(1); }
+  }
+  #mobileControls {
+    position: fixed;
+    z-index: 8;
+    left: 12px;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    display: none;
+    align-items: end;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .steer, .throttle {
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+  }
+  .throttle { flex-direction: column; }
+  #mobileControls button {
+    min-width: 72px;
+    min-height: 68px;
+    margin: 0;
+    padding: 0;
+    border: 2px solid rgba(255,255,255,.55);
+    border-radius: 18px;
+    color: #fff;
+    background: linear-gradient(180deg, rgba(66,234,255,.78), rgba(20,60,180,.72));
+    box-shadow: 0 5px 0 rgba(0,0,0,.45);
+    font-size: 1.4rem;
+  }
+  #mobileControls [data-drive="accelerate"] {
+    background: linear-gradient(180deg, rgba(255,212,81,.9), rgba(255,116,41,.78));
+  }
+  #mobileControls [data-drive="brake"] {
+    background: linear-gradient(180deg, rgba(255,72,112,.82), rgba(120,10,45,.72));
+  }
+  @media (max-width: 760px), (pointer: coarse) {
+    #hud { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; top: 8px; left: 8px; right: 8px; }
+    .stat { min-height: 45px; padding: 5px; }
+    #quickControls { top: auto; bottom: 160px; right: 8px; width: 112px; }
+    #quickControls button { min-height: 34px; padding: 6px; font-size: .64rem; }
+    #mobileControls { display: flex; }
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud">
+  <div class="stat"><span>Lap</span><strong id="lapValue">1/3</strong></div>
+  <div class="stat"><span>Checkpoint</span><strong id="checkpointValue">1/6</strong></div>
+  <div class="stat"><span>Timer</span><strong id="timerValue">0:00.0</strong></div>
+  <div class="stat"><span>Speed</span><strong id="speedValue">0</strong></div>
+  <div class="stat"><span>Status</span><strong id="statusValue">Menu</strong></div>
+</div>
+
+<div id="quickControls">
+  <button id="pauseBtn">Pause</button>
+  <button id="soundBtn">Sound On</button>
+  <button id="restartBtn">Restart</button>
+</div>
+
+<div id="mobileControls">
+  <div class="steer">
+    <button data-drive="left">LEFT</button>
+    <button data-drive="right">RIGHT</button>
+  </div>
+  <div class="throttle">
+    <button data-drive="accelerate">GAS</button>
+    <button data-drive="brake">BRAKE</button>
+  </div>
+</div>
+
+<div id="raceMessage"></div>
+
+<section id="titleScreen" class="screen active">
+  <div class="panel">
+    <div class="brand">Reh Dogg Games Plus</div>
+    <h1>Fire Speed Boat Rush</h1>
+    <p class="copy">Blast across neon water, hit every checkpoint, and finish three laps in a lightweight arcade boat race.</p>
+    <button id="startBtn">Start Race</button>
+    <button id="instructionsBtn">How To Race</button>
+    <label class="volumeControl">Master Volume <input id="titleVolumeSlider" type="range" min="0" max="100" value="80"></label>
+  </div>
+</section>
+
+<section id="instructionsScreen" class="screen">
+  <div class="panel">
+    <div class="brand">Reh Dogg Games Plus</div>
+    <h2>How To Race</h2>
+    <p class="copy">Desktop: use arrow keys or WASD. Up accelerates, down brakes, left and right steer. Mobile: use the large touch controls. Drive through the glowing checkpoints in order and complete 3 laps.</p>
+    <button id="backBtn">Back</button>
+  </div>
+</section>
+
+<section id="finishScreen" class="screen">
+  <div class="panel">
+    <div class="brand">Fire Speed Boat Rush</div>
+    <h2>Race Complete</h2>
+    <p class="copy" id="finishStats">Final Time: 0:00.0</p>
+    <button id="playAgainBtn">Race Again</button>
+    <button id="menuBtn">Return to Menu</button>
+    <label class="volumeControl">Master Volume <input id="finishVolumeSlider" type="range" min="0" max="100" value="80"></label>
+  </div>
+</section>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const ui = {
+    lap: document.getElementById("lapValue"),
+    checkpoint: document.getElementById("checkpointValue"),
+    timer: document.getElementById("timerValue"),
+    speed: document.getElementById("speedValue"),
+    status: document.getElementById("statusValue"),
+    message: document.getElementById("raceMessage"),
+    title: document.getElementById("titleScreen"),
+    instructions: document.getElementById("instructionsScreen"),
+    finish: document.getElementById("finishScreen"),
+    finishStats: document.getElementById("finishStats"),
+    soundBtn: document.getElementById("soundBtn"),
+    pauseBtn: document.getElementById("pauseBtn"),
+    volumeSliders: [
+      document.getElementById("titleVolumeSlider"),
+      document.getElementById("finishVolumeSlider")
+    ]
+  };
+
+  const state = {
+    running: false,
+    paused: false,
+    countdown: false,
+    soundOn: localStorage.getItem("speedBoatSound") !== "off",
+    masterVolume: Math.max(0, Math.min(1, Number(localStorage.getItem("speedBoatVolume") || .8))),
+    audioReady: false,
+    lastTime: 0,
+    raceTime: 0,
+    lap: 1,
+    maxLaps: 3,
+    checkpoint: 0,
+    waveTime: 0,
+    shake: 0,
+    splashCooldown: 0
+  };
+
+  const keys = new Set();
+  const touch = { left: false, right: false, accelerate: false, brake: false };
+  const boat = { x: 0, y: 0, angle: -Math.PI / 2, speed: 0, maxSpeed: 360, radius: 22 };
+  const camera = { x: 0, y: 0 };
+  let foam = [];
+
+  const track = [
+    { x: 0, y: -520 },
+    { x: 420, y: -330 },
+    { x: 500, y: 210 },
+    { x: 80, y: 520 },
+    { x: -450, y: 340 },
+    { x: -470, y: -250 }
+  ];
+
+  const waterObstacles = [
+    { x: 215, y: -455, r: 34, type: "buoy" },
+    { x: 560, y: -45, r: 38, type: "rock" },
+    { x: 270, y: 430, r: 32, type: "buoy" },
+    { x: -240, y: 500, r: 40, type: "rock" },
+    { x: -560, y: 20, r: 36, type: "buoy" }
+  ];
+
+  function optionalAudio(src, volume = .8, loop = false) {
+    const audio = new Audio(src);
+    audio.preload = "auto";
+    audio.loop = loop;
+    audio.dataset.baseVolume = String(volume);
+    audio.volume = volume * state.masterVolume;
+    audio.addEventListener("error", () => console.log(`[audio optional] missing ${src}`), { once: true });
+    return audio;
+  }
+
+  const sounds = {
+    engine: optionalAudio("engine.wav", .38, true),
+    splash: optionalAudio("splash.wav", .58),
+    checkpoint: optionalAudio("checkpoint.wav", .72),
+    button: optionalAudio("button_click.wav", .65),
+    victory: optionalAudio("victory_stinger.wav", .82),
+    music: optionalAudio("background_music.mp3", .42, true)
+  };
+
+  function setVolume(value) {
+    state.masterVolume = Math.max(0, Math.min(1, value));
+    localStorage.setItem("speedBoatVolume", String(state.masterVolume));
+    Object.values(sounds).forEach(sound => {
+      sound.volume = Number(sound.dataset.baseVolume || .8) * state.masterVolume;
+    });
+    ui.volumeSliders.forEach(slider => {
+      if (slider) slider.value = String(Math.round(state.masterVolume * 100));
+    });
+  }
+
+  function playSound(name) {
+    if (!state.soundOn) return;
+    const sound = sounds[name];
+    if (!sound) return;
+    try {
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    } catch (e) {}
+  }
+
+  function playLoop(name) {
+    if (!state.soundOn || !state.audioReady) return;
+    const sound = sounds[name];
+    if (!sound || !sound.paused) return;
+    try { sound.play().catch(() => {}); } catch (e) {}
+  }
+
+  function stopLoop(name) {
+    const sound = sounds[name];
+    if (!sound) return;
+    try {
+      sound.pause();
+      sound.currentTime = 0;
+    } catch (e) {}
+  }
+
+  function syncAudio() {
+    if (!state.soundOn || !state.running || state.paused) {
+      stopLoop("engine");
+      if (!state.running) stopLoop("music");
+      return;
+    }
+    playLoop("music");
+    if (!state.countdown && Math.abs(boat.speed) > 18) {
+      playLoop("engine");
+      sounds.engine.volume = Number(sounds.engine.dataset.baseVolume) * state.masterVolume * (.35 + Math.min(1, Math.abs(boat.speed) / boat.maxSpeed) * .65);
+    } else {
+      stopLoop("engine");
+    }
+  }
+
+  function unlockAudio() {
+    if (state.audioReady) return;
+    state.audioReady = true;
+    Object.values(sounds).forEach(sound => {
+      if (sound.loop) return;
+      try {
+        sound.muted = true;
+        sound.play().then(() => {
+          sound.pause();
+          sound.currentTime = 0;
+          sound.muted = false;
+        }).catch(() => { sound.muted = false; });
+      } catch (e) {
+        sound.muted = false;
+      }
+    });
+    setTimeout(syncAudio, 120);
+  }
+
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, matchMedia("(pointer: coarse)").matches ? 1.25 : 2);
+    canvas.width = Math.floor(innerWidth * dpr);
+    canvas.height = Math.floor(innerHeight * dpr);
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function showScreen(screen) {
+    [ui.title, ui.instructions, ui.finish].forEach(s => s.classList.remove("active"));
+    if (screen) screen.classList.add("active");
+  }
+
+  function formatTime(seconds) {
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60).toString().padStart(2, "0");
+    const tenths = Math.floor((seconds % 1) * 10);
+    return `${min}:${sec}.${tenths}`;
+  }
+
+  function updateHud() {
+    ui.lap.textContent = `${Math.min(state.lap, state.maxLaps)}/${state.maxLaps}`;
+    ui.checkpoint.textContent = `${state.checkpoint + 1}/${track.length}`;
+    ui.timer.textContent = formatTime(state.raceTime);
+    ui.speed.textContent = String(Math.round(Math.abs(boat.speed) / boat.maxSpeed * 100));
+    ui.status.textContent = state.paused ? "Paused" : state.countdown ? "Ready" : state.running ? "Racing" : "Menu";
+    ui.pauseBtn.textContent = state.paused ? "Resume" : "Pause";
+    ui.soundBtn.textContent = state.soundOn ? "Sound On" : "Sound Off";
+  }
+
+  function message(text) {
+    ui.message.textContent = text;
+    ui.message.classList.remove("active");
+    void ui.message.offsetWidth;
+    ui.message.classList.add("active");
+  }
+
+  function resetRace() {
+    state.running = true;
+    state.paused = false;
+    state.countdown = true;
+    state.raceTime = 0;
+    state.lap = 1;
+    state.checkpoint = 0;
+    state.shake = 0;
+    boat.x = 0;
+    boat.y = 80;
+    boat.angle = -Math.PI / 2;
+    boat.speed = 0;
+    foam = [];
+    showScreen(null);
+    updateHud();
+    playLoop("music");
+    startCountdown();
+  }
+
+  function startCountdown() {
+    const steps = ["3", "2", "1", "GO!"];
+    let i = 0;
+    const tick = () => {
+      message(steps[i++]);
+      if (i < steps.length) setTimeout(tick, 760);
+      else setTimeout(() => {
+        state.countdown = false;
+        playLoop("music");
+        updateHud();
+      }, 620);
+    };
+    tick();
+  }
+
+  function finishRace() {
+    state.running = false;
+    state.paused = false;
+    stopLoop("engine");
+    stopLoop("music");
+    playSound("victory");
+    ui.finishStats.textContent = `Final Time: ${formatTime(state.raceTime)}`;
+    showScreen(ui.finish);
+    updateHud();
+  }
+
+  function togglePause() {
+    if (!state.running || state.countdown) return;
+    state.paused = !state.paused;
+    syncAudio();
+    updateHud();
+    message(state.paused ? "Paused" : "Rush!");
+  }
+
+  function worldToScreen(x, y) {
+    return { x: x - camera.x + innerWidth / 2, y: y - camera.y + innerHeight / 2 };
+  }
+
+  function update(dt) {
+    state.waveTime += dt;
+    if (!state.running || state.paused || state.countdown) {
+      syncAudio();
+      return;
+    }
+    state.raceTime += dt;
+    const steer = (keys.has("ArrowRight") || keys.has("KeyD") || touch.right ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("KeyA") || touch.left ? 1 : 0);
+    const throttle = (keys.has("ArrowUp") || keys.has("KeyW") || touch.accelerate ? 1 : 0) - (keys.has("ArrowDown") || keys.has("KeyS") || touch.brake ? .75 : 0);
+    boat.speed += throttle * 260 * dt;
+    boat.speed *= 1 - Math.min(.96, 1.25 * dt);
+    boat.speed = Math.max(-105, Math.min(boat.maxSpeed, boat.speed));
+    boat.angle += steer * (1.75 + Math.abs(boat.speed) / boat.maxSpeed * 2.2) * dt * (boat.speed >= 0 ? 1 : -1);
+    boat.x += Math.cos(boat.angle) * boat.speed * dt;
+    boat.y += Math.sin(boat.angle) * boat.speed * dt;
+    camera.x += (boat.x - camera.x) * Math.min(1, 4 * dt);
+    camera.y += (boat.y - camera.y) * Math.min(1, 4 * dt);
+    if (Math.abs(boat.speed) > 45) {
+      const back = boat.angle + Math.PI;
+      foam.push({
+        x: boat.x + Math.cos(back) * 25 + (Math.random() - .5) * 16,
+        y: boat.y + Math.sin(back) * 25 + (Math.random() - .5) * 16,
+        life: .9,
+        size: 8 + Math.random() * 10
+      });
+    }
+    foam = foam.filter(p => {
+      p.life -= dt;
+      p.size += 18 * dt;
+      return p.life > 0;
+    });
+    state.splashCooldown = Math.max(0, state.splashCooldown - dt);
+    for (const obstacle of waterObstacles) {
+      const d = Math.hypot(boat.x - obstacle.x, boat.y - obstacle.y);
+      if (d < boat.radius + obstacle.r) {
+        const angle = Math.atan2(boat.y - obstacle.y, boat.x - obstacle.x);
+        boat.x = obstacle.x + Math.cos(angle) * (boat.radius + obstacle.r);
+        boat.y = obstacle.y + Math.sin(angle) * (boat.radius + obstacle.r);
+        boat.speed *= -.28;
+        state.shake = Math.max(state.shake, .18);
+        if (state.splashCooldown <= 0) {
+          state.splashCooldown = .45;
+          playSound("splash");
+          message("Splash!");
+          for (let i = 0; i < 12; i++) {
+            foam.push({
+              x: boat.x + (Math.random() - .5) * 44,
+              y: boat.y + (Math.random() - .5) * 44,
+              life: .55 + Math.random() * .35,
+              size: 6 + Math.random() * 12
+            });
+          }
+        }
+      }
+    }
+    const cp = track[state.checkpoint];
+    if (Math.hypot(boat.x - cp.x, boat.y - cp.y) < 76) {
+      state.checkpoint++;
+      state.shake = .12;
+      playSound("checkpoint");
+      message(state.checkpoint >= track.length ? "Lap!" : "Checkpoint!");
+      if (state.checkpoint >= track.length) {
+        state.checkpoint = 0;
+        state.lap++;
+        if (state.lap > state.maxLaps) finishRace();
+      }
+    }
+    state.shake = Math.max(0, state.shake - dt);
+    syncAudio();
+    updateHud();
+  }
+
+  function drawWater() {
+    const t = state.waveTime;
+    const grad = ctx.createLinearGradient(0, 0, 0, innerHeight);
+    grad.addColorStop(0, "#063a5e");
+    grad.addColorStop(.52, "#07537a");
+    grad.addColorStop(1, "#031a2a");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, innerWidth, innerHeight);
+    ctx.lineWidth = 2;
+    for (let i = -80; i < innerWidth + 120; i += 90) {
+      for (let j = -40; j < innerHeight + 80; j += 64) {
+        const x = i + Math.sin(t * 1.7 + j * .015) * 24 - (camera.x % 90);
+        const y = j + Math.cos(t * 1.4 + i * .012) * 10 - (camera.y % 64);
+        ctx.strokeStyle = "rgba(150,238,255,.18)";
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + 24, y - 10, x + 54, y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawTrackHints() {
+    ctx.strokeStyle = "rgba(255,212,81,.18)";
+    ctx.lineWidth = 5;
+    ctx.setLineDash([18, 16]);
+    ctx.beginPath();
+    track.forEach((p, i) => {
+      const s = worldToScreen(p.x, p.y);
+      if (i === 0) ctx.moveTo(s.x, s.y);
+      else ctx.lineTo(s.x, s.y);
+    });
+    const first = worldToScreen(track[0].x, track[0].y);
+    ctx.lineTo(first.x, first.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawCheckpoint(p, active, next) {
+    const s = worldToScreen(p.x, p.y);
+    const pulse = Math.sin(state.waveTime * 5) * 5;
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.shadowBlur = active ? 32 : 12;
+    ctx.shadowColor = active ? "#ffd451" : "#42eaff";
+    ctx.strokeStyle = active ? "#ffd451" : "rgba(66,234,255,.38)";
+    ctx.lineWidth = active ? 8 : 4;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 72 + (active ? pulse : 0), 32 + (active ? pulse * .25 : 0), 0, 0, Math.PI * 2);
+    ctx.stroke();
+    if (active && next) {
+      const angle = Math.atan2(next.y - p.y, next.x - p.x);
+      ctx.rotate(angle);
+      ctx.fillStyle = "#ffd451";
+      ctx.beginPath();
+      ctx.moveTo(24, 0);
+      ctx.lineTo(-10, -16);
+      ctx.lineTo(-3, 0);
+      ctx.lineTo(-10, 16);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawWaterObstacle(obstacle) {
+    const s = worldToScreen(obstacle.x, obstacle.y);
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    if (obstacle.type === "rock") {
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = "rgba(0,0,0,.55)";
+      ctx.fillStyle = "#6b7280";
+      ctx.strokeStyle = "#263241";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-obstacle.r * .8, obstacle.r * .35);
+      ctx.lineTo(-obstacle.r * .55, -obstacle.r * .45);
+      ctx.lineTo(obstacle.r * .15, -obstacle.r * .82);
+      ctx.lineTo(obstacle.r * .82, -obstacle.r * .18);
+      ctx.lineTo(obstacle.r * .58, obstacle.r * .55);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,.22)";
+      ctx.beginPath();
+      ctx.arc(-obstacle.r * .18, -obstacle.r * .22, obstacle.r * .18, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = "#ff7429";
+      ctx.fillStyle = "#ff3b22";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(0, 0, obstacle.r * .62, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "#ffd451";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-obstacle.r * .45, 0);
+      ctx.lineTo(obstacle.r * .45, 0);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawBoat() {
+    const s = worldToScreen(boat.x, boat.y);
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(boat.angle + Math.PI / 2);
+    ctx.shadowBlur = 24;
+    ctx.shadowColor = "#ff7429";
+    ctx.fillStyle = "#f7fbff";
+    ctx.strokeStyle = "#05101c";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, -38);
+    ctx.bezierCurveTo(25, -20, 24, 24, 11, 42);
+    ctx.lineTo(-11, 42);
+    ctx.bezierCurveTo(-24, 24, -25, -20, 0, -38);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#ff3b22";
+    ctx.beginPath();
+    ctx.moveTo(0, -31);
+    ctx.bezierCurveTo(13, -16, 14, 10, 7, 28);
+    ctx.lineTo(-7, 28);
+    ctx.bezierCurveTo(-14, 10, -13, -16, 0, -31);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#113457";
+    ctx.beginPath();
+    ctx.roundRect(-10, -5, 20, 18, 7);
+    ctx.fill();
+    ctx.fillStyle = "#42eaff";
+    ctx.fillRect(-8, -2, 16, 5);
+    ctx.fillStyle = "#ffd451";
+    ctx.fillRect(-15, 26, 30, 8);
+    ctx.restore();
+  }
+
+  function render() {
+    const shake = state.shake > 0 ? state.shake * 20 : 0;
+    ctx.save();
+    ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+    drawWater();
+    drawTrackHints();
+    foam.forEach(p => {
+      const s = worldToScreen(p.x, p.y);
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = "rgba(220,250,255,.78)";
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+    waterObstacles.forEach(drawWaterObstacle);
+    track.forEach((p, i) => drawCheckpoint(p, i === state.checkpoint, track[(i + 1) % track.length]));
+    drawBoat();
+    ctx.restore();
+  }
+
+  function loop(now) {
+    const dt = Math.min(.05, (now - state.lastTime) / 1000 || 0);
+    state.lastTime = now;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function pressButton(fn) {
+    unlockAudio();
+    playSound("button");
+    fn();
+  }
+
+  function prevent(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function bindDriveButton(button) {
+    const dir = button.dataset.drive;
+    ["touchstart", "touchmove", "touchend", "touchcancel", "contextmenu"].forEach(type => button.addEventListener(type, prevent, { passive: false }));
+    button.addEventListener("pointerdown", e => {
+      prevent(e);
+      unlockAudio();
+      if (button.setPointerCapture && e.pointerId !== undefined) button.setPointerCapture(e.pointerId);
+      touch[dir] = true;
+    });
+    button.addEventListener("pointerup", e => { prevent(e); touch[dir] = false; });
+    button.addEventListener("pointercancel", e => { prevent(e); touch[dir] = false; });
+    button.addEventListener("pointerleave", () => touch[dir] = false);
+  }
+
+  addEventListener("resize", resize);
+  addEventListener("keydown", e => {
+    unlockAudio();
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) e.preventDefault();
+    if (e.code === "Escape" || e.code === "KeyP") { togglePause(); return; }
+    keys.add(e.code);
+  });
+  addEventListener("keyup", e => keys.delete(e.code));
+  document.addEventListener("contextmenu", e => e.preventDefault());
+  document.querySelectorAll("[data-drive]").forEach(bindDriveButton);
+  document.getElementById("startBtn").addEventListener("click", () => pressButton(resetRace));
+  document.getElementById("instructionsBtn").addEventListener("click", () => pressButton(() => showScreen(ui.instructions)));
+  document.getElementById("backBtn").addEventListener("click", () => pressButton(() => showScreen(ui.title)));
+  document.getElementById("pauseBtn").addEventListener("click", () => pressButton(togglePause));
+  document.getElementById("restartBtn").addEventListener("click", () => pressButton(resetRace));
+  document.getElementById("soundBtn").addEventListener("click", () => {
+    unlockAudio();
+    state.soundOn = !state.soundOn;
+    localStorage.setItem("speedBoatSound", state.soundOn ? "on" : "off");
+    updateHud();
+    playSound("button");
+    syncAudio();
+  });
+  document.getElementById("playAgainBtn").addEventListener("click", () => pressButton(resetRace));
+  document.getElementById("menuBtn").addEventListener("click", () => pressButton(() => {
+    state.running = false;
+    stopLoop("engine");
+    stopLoop("music");
+    showScreen(ui.title);
+    updateHud();
+  }));
+  ui.volumeSliders.forEach(slider => {
+    if (!slider) return;
+    slider.addEventListener("pointerdown", e => { e.stopPropagation(); unlockAudio(); });
+    slider.addEventListener("input", e => setVolume(Number(e.target.value) / 100));
+  });
+
+  resize();
+  setVolume(state.masterVolume);
+  updateHud();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
